@@ -16,11 +16,7 @@ module Puzzle1 =
   let pColor = pRed <|> pGreen <|> pBlue
 
   [<Struct>]
-  type CubeSet =
-    { Reds : int
-      Greens : int
-      Blues : int
-    }
+  type CubeSet = { Reds : int; Greens : int; Blues : int }
   
   let mkCubeSet (cubes : (int * Color) list) =
     let mutable reds = 0
@@ -37,10 +33,7 @@ module Puzzle1 =
 
   let pCubeSets = pAtLeastOne ";" pCubeSet
 
-  type Game =
-    { Number : int
-      CubeSets : CubeSet list
-    }
+  type Game = { Number : int; CubeSets : CubeSet list }
   
   let pGame =
     (pWord "Game" >>. pInt .>> pWord ":") >> pCubeSets
