@@ -25,8 +25,7 @@ module Puzzle1 =
 
   let solve (input : string) =
     IO.File.ReadAllLines input
-    |> Array.map getCalibrationValue
-    |> Array.sum
+    |> Array.sumBy getCalibrationValue
 
 
 module Puzzle2 =
@@ -104,5 +103,4 @@ module Puzzle2 =
   
   let solve (input : string) =
     System.IO.File.ReadAllLines input
-    |> Array.map getCalibrationValue
-    |> Array.sum
+    |> Array.sumBy getCalibrationValue
