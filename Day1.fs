@@ -8,20 +8,17 @@ module Puzzle1 =
     if c >= '0' && c <= '9' then Some (int c - int '0') else None
   
   let getCalibrationValue (line : string) =
-    if String.IsNullOrWhiteSpace line then
-      failwith "Invalid input"
-    else
-      let mutable first = None
-      let mutable second = None
-      for c in line do
-        match charToDigit c with
-        | Some d when first.IsNone -> first <- Some d
-        | Some d -> second <- Some d
-        | None -> ()
-      match first, second with
-      | Some f, Some s -> f * 10 + s
-      | Some f, None -> f * 10 + f
-      | _ -> failwith "Invalid input"
+    let mutable first = None
+    let mutable second = None
+    for c in line do
+      match charToDigit c with
+      | Some d when first.IsNone -> first <- Some d
+      | Some d -> second <- Some d
+      | None -> ()
+    match first, second with
+    | Some f, Some s -> f * 10 + s
+    | Some f, None -> f * 10 + f
+    | _ -> failwith "Invalid input"
 
   let solve (input : string) =
     IO.File.ReadAllLines input
