@@ -23,6 +23,12 @@ let (>>.) p1 p2 =
 let (.>>) p1 p2 =
   p1 >>= fun a -> p2 >>= fun _ -> retur a
 
+let (<|>) (p1 : Parser<'a>) (p2 : Parser<'a>) : Parser<'a> =
+  fun input ->
+    match p1 input with
+    | Some _ as r -> r
+    | None -> p2 input
+
 let map (f : 'a -> 'b) (p : Parser<'a>) : Parser<'b> =
   fun input ->
     p input |> Option.map (fun (a, inp) -> (f a, inp))
@@ -65,13 +71,13 @@ module Puzzle1 =
 
   type Color = Red | Green | Blue
 
-  let pColor : Parser<Color> =
-    fun input ->
-      let input = input.TrimStart ()
-      if input.StartsWith "red" then Some (Red, input.Substring 3)
-      elif input.StartsWith "green" then Some (Green, input.Substring 5)
-      elif input.StartsWith "blue" then Some (Blue, input.Substring 4)
-      else None
+  let pRed = map (fun _ -> Red) (pWord "red")
+
+  let pGreen = map (fun _ -> Green) (pWord "green")
+
+  let pBlue = map (fun _ -> Blue) (pWord "blue")
+
+  let pColor = pRed <|> pGreen <|> pBlue
 
   [<Struct>]
   type CubeSet =
