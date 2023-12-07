@@ -50,21 +50,10 @@ let pInt : Parser<int> =
     if i = 0 then None
     else Some (n, input.Substring i)
 
-let pMany separator p =
-  let rec pTail input =
-    match (pWord separator >>. p) input with
-    | None -> None
-    | Some (x, inp) ->
-      match pTail inp with
-      | None -> Some ([ x ], inp)
-      | Some (tail, inp) -> Some (x :: tail, inp)
-  fun input ->
-    match p input with
-    | None -> None
-    | Some (x, inp) ->
-      match pTail inp with
-      | None -> Some ([ x ], inp)
-      | Some (tail, inp) -> Some (x :: tail, inp)
+let pAtLeastOne sep p =
+  let inline cons pRem x = map (fun xs -> x :: xs) pRem <|> retur [ x ]
+  let rec pTail input = ((pWord sep >>. p) >>= cons pTail) input
+  p >>= cons pTail
 
 
 module Puzzle1 =
@@ -97,9 +86,9 @@ module Puzzle1 =
       | Blue -> blues <- n
     { Reds = reds; Greens = greens; Blues = blues }
 
-  let pCubeSet = map mkCubeSet (pMany "," (pInt >> pColor))
+  let pCubeSet = map mkCubeSet (pAtLeastOne "," (pInt >> pColor))
 
-  let pCubeSets = pMany ";" pCubeSet
+  let pCubeSets = pAtLeastOne ";" pCubeSet
 
   type Game =
     { Number : int
