@@ -55,6 +55,17 @@ let pInt : Parsec<int> =
     if i = 0 then None
     else Some (n, input.Substring i)
 
+let pLong : Parsec<int64> =
+  fun input ->
+    let input = input.TrimStart ()
+    let mutable n = 0L
+    let mutable i = 0
+    while i < input.Length && Char.IsDigit input[i] do
+      n <- n * 10L + (int64 input[i] - int64 '0')
+      i <- i + 1
+    if i = 0 then None
+    else Some (n, input.Substring i)
+
 let pAtLeastOneSep sep p =
   let consWith pRem x = map (fun xs -> x :: xs) pRem <|> retur [ x ]
   let rec pTail input = ((pWord sep >>. p) >>= consWith pTail) input
