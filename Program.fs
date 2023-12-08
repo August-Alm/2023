@@ -6,7 +6,7 @@ open System.IO
 [<EntryPoint>]
 let main _ =
 
-  let input i = Path.Combine ("Input", $"Day{i}", $"puzzle.txt")
+  let input i = Path.Combine ("Input", sprintf "Day%02i" i, $"puzzle.txt")
 
   printfn "Day 1, Puzzle 1: %A" (Day1.Puzzle1.solve (input 1))
   printfn "Day 1, Puzzle 2: %A" (Day1.Puzzle2.solve (input 1))
