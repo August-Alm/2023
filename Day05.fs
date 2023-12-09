@@ -3,16 +3,16 @@ module AdventOfCode.Day5
 open AdventOfCode.Parsec
 open System.IO
 
-[<Struct>]
-type Data = { Destination : int64; Source : int64; Range : int64 }
+type MapData =
+  { Destination : int64; Source : int64; Length : int64 }
 
-type IntMap = Data list
+type IntMap = MapData list
 
 [<RequireQualifiedAccess>]
 module IntMap =
 
-  let private inRange (i : int64) (d : Data) =
-    i >= d.Source && i <= d.Source + d.Range
+  let private inRange (i : int64) (d : MapData) =
+    i >= d.Source && i <= d.Source + d.Length
 
   let find (k : int64) (m : IntMap) =
     List.tryFind (inRange k) m
@@ -20,24 +20,14 @@ module IntMap =
     |> Option.defaultValue k
 
 
-type Almanac =
-  { Seeds : int64 list
-    SeedToSoil : IntMap
-    SoilToFertilizer : IntMap
-    FertilizerToWater : IntMap
-    WaterToLight : IntMap
-    LightToTemperature : IntMap
-    TemperatureToHumidity : IntMap
-    HumidityToLocation : IntMap
-  }
+type Almanac = { Seeds : int64 list; IntMaps : IntMap list }
 
 let pIntMap =
   pLong >> pLong >> pLong
-  |> map (fun ((d, s), r) -> { Destination = d; Source = s; Range = r })
+  |> map (fun ((d, s), r) -> { Destination = d; Source = s; Length = r })
   |> pAtLeastOne
 
-let pAlmanac =
-  (pWord "seeds:" >>. pAtLeastOne pLong) >>
+let pIntMaps : Parsec<IntMap list> =
   (pWord "seed-to-soil map:" >>. pIntMap) >>
   (pWord "soil-to-fertilizer map:" >>. pIntMap) >>
   (pWord "fertilizer-to-water map:" >>. pIntMap) >>
@@ -45,37 +35,93 @@ let pAlmanac =
   (pWord "light-to-temperature map:" >>. pIntMap) >>
   (pWord "temperature-to-humidity map:" >>. pIntMap) >>
   (pWord "humidity-to-location map:" >>. pIntMap)
-  |> map (fun ((((((( seeds
-                    , seedToSoil)
-                    , soilToFertilizer)
-                    , fertilizerToWater)
-                    , waterToLight)
-                    , lightToTemperature)
-                    , temperatureToHumidity)
-                    , humidityToLocation ) ->
-    { Seeds = seeds
-      SeedToSoil = seedToSoil
-      SoilToFertilizer = soilToFertilizer
-      FertilizerToWater = fertilizerToWater
-      WaterToLight = waterToLight
-      LightToTemperature = lightToTemperature
-      TemperatureToHumidity = temperatureToHumidity
-      HumidityToLocation = humidityToLocation
-    })
+  |> map (fun (((((( seedToSoil
+                   , soilToFertilizer)
+                   , fertilizerToWater)
+                   , waterToLight)
+                   , lightToTemperature)
+                   , temperatureToHumidity)
+                   , humidityToLocation ) ->
+    [ seedToSoil
+      soilToFertilizer
+      fertilizerToWater
+      waterToLight
+      lightToTemperature
+      temperatureToHumidity
+      humidityToLocation
+    ])
 
-let getLocation (almanac : Almanac) (seed : int64) =
-  let soil = IntMap.find seed almanac.SeedToSoil
-  let fertilizer = IntMap.find soil almanac.SoilToFertilizer
-  let water = IntMap.find fertilizer almanac.FertilizerToWater
-  let light = IntMap.find water almanac.WaterToLight
-  let temperature = IntMap.find light almanac.LightToTemperature
-  let humidity = IntMap.find temperature almanac.TemperatureToHumidity
-  let location = IntMap.find humidity almanac.HumidityToLocation
-  location
+let pAlmanac : Parsec<Almanac> =
+  (pWord "seeds:" >>. pAtLeastOne pLong) >> pIntMaps
+  |> map (fun (seeds, intMaps) -> { Seeds = seeds; IntMaps = intMaps })
+
+let getLocation (maps : IntMap list) (seed : int64) =
+  List.fold IntMap.find seed maps
 
 
 module Puzzle1 =
 
   let solve (input : string) =
     let almanac = getParsed pAlmanac (File.ReadAllText input)
-    almanac.Seeds |> List.map (getLocation almanac) |> List.min
+    almanac.Seeds |> List.map (getLocation almanac.IntMaps) |> List.min
+
+
+module Puzzle2 =
+
+  open System.Collections.Generic
+
+  type Range = { Start : int64; Length : int64 }
+  with
+    member this.End = this.Start + this.Length - 1L
+
+    static member intersects (r1 : Range) (r2 : Range) =
+      r1.Start <= r2.End && r2.Start <= r1.End
+
+  type Almanac2 = { Seeds : Range list; IntMaps : IntMap list }
+
+  let pRange =
+    pLong >> pLong
+    |> map (fun (s, l) -> { Start = s; Length = l })
+
+  let pSeeds =
+    pWord "seeds:" >>. pAtLeastOne pRange
+
+  let pAlmanac2 =
+    pSeeds >> pIntMaps
+    |> map (fun (seeds, intMaps) -> { Seeds = seeds; IntMaps = intMaps })
+
+  let mkRangeMap (m : IntMap) =
+    List.fold (fun m d ->
+      let inRange = { Start = d.Source; Length = d.Length }
+      let outRange = { Start = d.Destination; Length = d.Length }
+      Map.add inRange outRange m)
+      Map.empty m
+  
+  let transform (ranges : Range seq) (rangeMap : Map<Range, Range>) =
+    let input = Queue<Range> (ranges)
+    let output = ResizeArray<Range> ()
+    let mutable range = Unchecked.defaultof<Range>
+    let inline mkRange s e = { Start = s; Length = e - s + 1L }
+    while input.TryDequeue &range do
+      match rangeMap.Keys |> Seq.tryFind (Range.intersects range) with
+      | None -> output.Add range
+      | Some source ->
+        if source.Start <= range.Start && range.End <= source.End then
+          let destination = rangeMap[source]
+          let shift = destination.Start - source.Start
+          output.Add (mkRange (range.Start + shift) (range.End + shift))
+        elif range.Start < source.Start then
+          input.Enqueue (mkRange range.Start (source.Start - 1L))
+          input.Enqueue (mkRange source.Start range.End)
+        else
+          input.Enqueue (mkRange range.Start source.End)
+          input.Enqueue (mkRange (source.End + 1L) range.End)
+    output :> seq<_>
+
+  let solve (input : string) =
+    let almanac = getParsed pAlmanac2 (File.ReadAllText input)
+    almanac.IntMaps
+    |> List.map mkRangeMap
+    |> Seq.fold transform almanac.Seeds
+    |> Seq.map _.Start
+    |> Seq.min
