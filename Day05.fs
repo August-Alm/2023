@@ -19,7 +19,6 @@ module IntMap =
     |> Option.map (fun d -> d.Destination + k - d.Source)
     |> Option.defaultValue k
 
-
 type Almanac = { Seeds : int64 list; IntMaps : IntMap list }
 
 let pIntMap =
@@ -71,11 +70,7 @@ module Puzzle2 =
   open System.Collections.Generic
 
   type Range = { Start : int64; Length : int64 }
-  with
-    member this.End = this.Start + this.Length - 1L
-
-    static member intersects (r1 : Range) (r2 : Range) =
-      r1.Start <= r2.End && r2.Start <= r1.End
+  with member this.End = this.Start + this.Length - 1L
 
   type Almanac2 = { Seeds : Range list; IntMaps : IntMap list }
 
@@ -102,8 +97,10 @@ module Puzzle2 =
     let output = ResizeArray<Range> ()
     let mutable range = Unchecked.defaultof<Range>
     let inline mkRange s e = { Start = s; Length = e - s + 1L }
+    let inline intersects (r1 : Range) (r2 : Range) =
+      r1.Start <= r2.End && r2.Start <= r1.End
     while input.TryDequeue &range do
-      match rangeMap.Keys |> Seq.tryFind (Range.intersects range) with
+      match rangeMap.Keys |> Seq.tryFind (intersects range) with
       | None -> output.Add range
       | Some source ->
         if source.Start <= range.Start && range.End <= source.End then
