@@ -9,26 +9,26 @@ open System.IO
 
 [<Measure>] type mm
 
-type Time = int<ms>
+type Time = int64<ms>
 
-type Distance = int<mm>
+type Distance = int64<mm>
 
 type Race = { Time : Time; Distance : Distance }
 
 type Sheet = Race list
 
 let pSheet =
-  let pTimes = pWord "Time:" >>. pAtLeastOne pInt
-  let pDistances = pWord "Distance:" >>. pAtLeastOne pInt
+  let pTimes = pWord "Time:" >>. pAtLeastOne pLong
+  let pDistances = pWord "Distance:" >>. pAtLeastOne pLong
   pTimes >> pDistances
   |> map (fun (ts, ds) ->
     List.zip ts ds |> List.map (fun (t, d) ->
-      { Time = Int32WithMeasure t; Distance = Int32WithMeasure d }))
+      { Time = Int64WithMeasure t; Distance = Int64WithMeasure d }))
 
-let speed (hold : Time) = hold * 1<mm/ms^2>
+let speed (hold : Time) = hold * 1L<mm/ms^2>
 
 let distance (race : Race) (hold : Time) =
-  if hold < 0<ms> || hold > race.Time then failwith "Invalid hold time"
+  if hold < 0L<ms> || hold > race.Time then failwith "Invalid hold time"
   else (race.Time - hold) * speed hold
 
 // The `distance` function is a quadratic polynomial in `hold`. The solutions
@@ -37,7 +37,7 @@ let distance (race : Race) (hold : Time) =
 // From this we can immediately calculate the number of `hold` values that
 // result in a distance of at least `race.Distance`:
 let numberOfWinningWays (race : Race) =
-  let timeOverTwo = 0.5 * double (race.Time / 1<ms>)
+  let timeOverTwo = 0.5 * double (race.Time / 1L<ms>)
   let delta = timeOverTwo * timeOverTwo - double race.Distance
   if delta < 0.0 then
     0
@@ -55,3 +55,23 @@ module Puzzle1 =
     |> List.map numberOfWinningWays
     |> List.reduce (*)
 
+module Puzzle2 =
+
+  type Sheet2 = Race
+
+  let concatInts =
+    List.reduce (fun a b -> Int64.Parse (string a + string b))
+  
+  let pSheet2 =
+    let pTimes = pWord "Time:" >>. pAtLeastOne pLong
+    let pDistances = pWord "Distance:" >>. pAtLeastOne pLong
+    pTimes >> pDistances
+    |> map (fun (ts, ds) ->
+      { Time = Int64WithMeasure (concatInts ts)
+        Distance = Int64WithMeasure (concatInts ds)
+      })
+  
+  let solve (input : string) =
+    File.ReadAllText input
+    |> getParsed pSheet2
+    |> numberOfWinningWays
