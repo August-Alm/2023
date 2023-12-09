@@ -93,12 +93,13 @@ module Puzzle2 =
       Map.empty m
   
   let transform (ranges : Range seq) (rangeMap : Map<Range, Range>) =
-    let input = Queue<Range> (ranges)
-    let output = ResizeArray<Range> ()
-    let mutable range = Unchecked.defaultof<Range>
-    let inline mkRange s e = { Start = s; Length = e - s + 1L }
+    let inline mkRange s e =
+      { Start = s; Length = e - s + 1L }
     let inline intersects (r1 : Range) (r2 : Range) =
       r1.Start <= r2.End && r2.Start <= r1.End
+    let input = Queue<Range> ranges
+    let output = ResizeArray<Range> ()
+    let mutable range = Unchecked.defaultof<Range>
     while input.TryDequeue &range do
       match rangeMap.Keys |> Seq.tryFind (intersects range) with
       | None -> output.Add range
