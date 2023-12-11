@@ -171,7 +171,7 @@ module Hand =
 
 
 let pHand =
-  let pCard = map Card.ofChar pChar
+  let pCard = map Card.ofChar pAnyChar
   (pAtLeastOne pCard) .>>. pLong
   |> map (fun (cs, bid) -> { Cards = cs; Bid = bid })
 

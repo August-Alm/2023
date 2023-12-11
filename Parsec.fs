@@ -46,17 +46,32 @@ let pWord (w : string) : Parsec<string> =
     else None
 
 // Fails for leading whitespace!
-let pChar : Parsec<char> =
+let pAnyChar : Parsec<char> =
   fun input ->
     let n = input.Length
     if n = 0 then
       None
     else
       let c = input[0]
-      if Char.IsWhiteSpace c then
-        None
-      else
-        if n = 1 then Some (c, "") else Some (c, input.Substring 1)
+      if Char.IsWhiteSpace c then None
+      else if n = 1 then Some (c, "") else Some (c, input.Substring 1)
+
+// Skips leading whitespace!
+let pLetters : Parsec<string> =
+  fun input ->
+    let input = input.TrimStart ()
+    let mutable i = 0
+    while i < input.Length && Char.IsLetter input[i] do
+      i <- i + 1
+    if i = 0 then None
+    else Some (input.Substring (0, i), input.Substring i)
+
+// Skips leading whitespace!
+let pChar (c : char) : Parsec<char> =
+  fun input ->
+    match pAnyChar (input.TrimStart ()) with
+    | Some (c', input') when c = c' -> Some (c, input')
+    | c' -> printfn $"{c'} <> {c}"; None
 
 // Skips leading whitespace!
 let pInt : Parsec<int> =
