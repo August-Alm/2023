@@ -13,16 +13,6 @@ let move (instruction : Instruction) (left : Node, right : Node) =
   | Left -> left
   | Right -> right
 
-let steps (instructions : Instruction list, network : Network) (start : Node) =
-  let rec loop steps instrs node =
-    match instrs with
-    | [] -> loop steps instructions node
-    | instr :: instrs ->
-      let next = move instr network[node]
-      if next[next.Length - 1] = 'Z' then steps
-      else loop (steps + 1) instrs next
-  loop 1 instructions start
-
 let pInstruction =
   fun input ->
     match pAnyChar input with
@@ -44,10 +34,20 @@ module Puzzle1 =
 
   open System.IO
 
+  let steps (instructions : Instruction list, network : Network) =
+    let rec loop steps instrs node =
+      match instrs with
+      | [] -> loop steps instructions node
+      | instr :: instrs ->
+        let next = move instr network[node]
+        if next = "ZZZ" then steps
+        else loop (steps + 1) instrs next
+    loop 1 instructions "AAA"
+
   let solve (input : string) =
     File.ReadAllText input
     |> getParsed (pAtLeastOne pInstruction .>>. pNetwork)
-    |> (fun doc -> steps doc "AAA")
+    |> steps
 
 module Puzzle2 =
 
@@ -57,9 +57,19 @@ module Puzzle2 =
   let lcm (a : bigint) (b : bigint) =
     (a * b) / BigInteger.GreatestCommonDivisor (a, b)
 
+  let steps (instructions : Instruction list, network : Network) start =
+    let rec loop steps instrs node =
+      match instrs with
+      | [] -> loop steps instructions node
+      | instr :: instrs ->
+        let next = move instr network[node]
+        if next[next.Length - 1] = 'Z' then steps
+        else loop (steps + 1I) instrs next
+    loop 1I instructions start
+
   let ghostSteps (instructions : Instruction list, network : Network) =
-    let startNodes = network.Keys |> Seq.filter (fun l -> l[l.Length - 1] = 'A')
-    Seq.reduce lcm (Seq.map (steps (instructions, network) >> bigint) startNodes)
+    let startNodes = Seq.filter (fun (l : string) -> l[l.Length - 1] = 'A') network.Keys
+    Seq.reduce lcm (Seq.map  (steps (instructions, network)) startNodes)
 
   let solve (input : string) =
     File.ReadAllText input
