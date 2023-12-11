@@ -19,7 +19,7 @@ let retur (a : 'a) : Parsec<'a> =
 
 let (>>=) = bind
 
-let (>>) p1 p2 =
+let (.>>.) p1 p2 =
   p1 >>= fun a -> p2 >>= fun b -> retur (a, b)
 
 let (>>.) p1 p2 =
@@ -38,12 +38,27 @@ let map (f : 'a -> 'b) (p : Parsec<'a>) : Parsec<'b> =
   fun input ->
     p input |> Option.map (fun (a, inp) -> (f a, inp))
 
+// Skips leading whitespace!
 let pWord (w : string) : Parsec<string> =
   fun input ->
     let input = input.TrimStart ()
     if input.StartsWith w then Some (w, input.Substring w.Length)
     else None
 
+// Fails for leading whitespace!
+let pChar : Parsec<char> =
+  fun input ->
+    let n = input.Length
+    if n = 0 then
+      None
+    else
+      let c = input[0]
+      if Char.IsWhiteSpace c then
+        None
+      else
+        if n = 1 then Some (c, "") else Some (c, input.Substring 1)
+
+// Skips leading whitespace!
 let pInt : Parsec<int> =
   fun input ->
     let input = input.TrimStart ()
@@ -55,6 +70,7 @@ let pInt : Parsec<int> =
     if i = 0 then None
     else Some (n, input.Substring i)
 
+// Skips leading whitespace!
 let pLong : Parsec<int64> =
   fun input ->
     let input = input.TrimStart ()

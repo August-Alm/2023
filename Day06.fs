@@ -20,7 +20,7 @@ type Sheet = Race list
 let pSheet =
   let pTimes = pWord "Time:" >>. pAtLeastOne pLong
   let pDistances = pWord "Distance:" >>. pAtLeastOne pLong
-  pTimes >> pDistances
+  pTimes .>>. pDistances
   |> map (fun (ts, ds) ->
     List.zip ts ds |> List.map (fun (t, d) ->
       { Time = Int64WithMeasure t; Distance = Int64WithMeasure d }))
@@ -65,7 +65,7 @@ module Puzzle2 =
   let pSheet2 =
     let pTimes = pWord "Time:" >>. pAtLeastOne pLong
     let pDistances = pWord "Distance:" >>. pAtLeastOne pLong
-    pTimes >> pDistances
+    pTimes .>>. pDistances
     |> map (fun (ts, ds) ->
       { Time = Int64WithMeasure (concatInts ts)
         Distance = Int64WithMeasure (concatInts ds)

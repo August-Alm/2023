@@ -27,5 +27,6 @@ let main _ =
   printfn "Day 6, Puzzle 2: %A" (Day6.Puzzle2.solve (input 6))
 
   printfn "Day 7, Puzzle 1: %A" (Day7.Puzzle1.solve (input 7))
+  printfn "Day 7, Puzzle 2: %A" (Day7.Puzzle2.solve (input 7))
 
   0

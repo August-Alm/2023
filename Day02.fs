@@ -29,14 +29,14 @@ module Puzzle1 =
       | Blue -> blues <- n
     { Reds = reds; Greens = greens; Blues = blues }
 
-  let pCubeSet = map mkCubeSet (pAtLeastOneSep "," (pInt >> pColor))
+  let pCubeSet = map mkCubeSet (pAtLeastOneSep "," (pInt .>>. pColor))
 
   let pCubeSets = pAtLeastOneSep ";" pCubeSet
 
   type Game = { Number : int; CubeSets : CubeSet list }
   
   let pGame =
-    (pWord "Game" >>. pInt .>> pWord ":") >> pCubeSets
+    (pWord "Game" >>. pInt .>> pWord ":") .>>. pCubeSets
     |> map (fun (n, r) -> { Number = n; CubeSets = r })
 
   let isPossible (s : CubeSet) =

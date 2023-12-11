@@ -22,17 +22,17 @@ module IntMap =
 type Almanac = { Seeds : int64 list; IntMaps : IntMap list }
 
 let pIntMap =
-  pLong >> pLong >> pLong
+  pLong .>>. pLong .>>. pLong
   |> map (fun ((d, s), r) -> { Destination = d; Source = s; Length = r })
   |> pAtLeastOne
 
 let pIntMaps : Parsec<IntMap list> =
-  (pWord "seed-to-soil map:" >>. pIntMap) >>
-  (pWord "soil-to-fertilizer map:" >>. pIntMap) >>
-  (pWord "fertilizer-to-water map:" >>. pIntMap) >>
-  (pWord "water-to-light map:" >>. pIntMap) >>
-  (pWord "light-to-temperature map:" >>. pIntMap) >>
-  (pWord "temperature-to-humidity map:" >>. pIntMap) >>
+  (pWord "seed-to-soil map:" >>. pIntMap) .>>.
+  (pWord "soil-to-fertilizer map:" >>. pIntMap) .>>.
+  (pWord "fertilizer-to-water map:" >>. pIntMap) .>>.
+  (pWord "water-to-light map:" >>. pIntMap) .>>.
+  (pWord "light-to-temperature map:" >>. pIntMap) .>>.
+  (pWord "temperature-to-humidity map:" >>. pIntMap) .>>.
   (pWord "humidity-to-location map:" >>. pIntMap)
   |> map (fun (((((( seedToSoil
                    , soilToFertilizer)
@@ -51,7 +51,7 @@ let pIntMaps : Parsec<IntMap list> =
     ])
 
 let pAlmanac : Parsec<Almanac> =
-  (pWord "seeds:" >>. pAtLeastOne pLong) >> pIntMaps
+  (pWord "seeds:" >>. pAtLeastOne pLong) .>>. pIntMaps
   |> map (fun (seeds, intMaps) -> { Seeds = seeds; IntMaps = intMaps })
 
 let getLocation (maps : IntMap list) (seed : int64) =
@@ -75,14 +75,14 @@ module Puzzle2 =
   type Almanac2 = { Seeds : Range list; IntMaps : IntMap list }
 
   let pRange =
-    pLong >> pLong
+    pLong .>>. pLong
     |> map (fun (s, l) -> { Start = s; Length = l })
 
   let pSeeds =
     pWord "seeds:" >>. pAtLeastOne pRange
 
   let pAlmanac2 =
-    pSeeds >> pIntMaps
+    pSeeds .>>. pIntMaps
     |> map (fun (seeds, intMaps) -> { Seeds = seeds; IntMaps = intMaps })
 
   let mkRangeMap (m : IntMap) =

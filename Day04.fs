@@ -13,7 +13,7 @@ let pWinning = pAtLeastOne pInt
 let pHave = pWord "|" >>. pAtLeastOne pInt
 
 let pCard =
-  (pIndex >> pWinning >> pHave)
+  (pIndex .>>. pWinning .>>. pHave)
   |> map (fun ((i, w), h) -> { Index = i; Winning = w; Have = h })
 
 module Puzzle1 =
