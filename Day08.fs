@@ -1,97 +1,69 @@
 module AdventOfCode.Day8
 
 open AdventOfCode.Parsec
-open System.Collections.Generic
 
 type Instruction = Left | Right
 
-type Path = Instruction list
+type Node = string
 
-[<RequireQualifiedAccess>]
-type NodeDescription =
-  { Label : string
-    Left : string
-    Right : string
-  }
-with
-  static member ctor (label : string) (left : string) (right : string) =
-    { Label = label; Left = left; Right = right }
+type Network = Map<Node, Node * Node>
 
-type Node (label : string) =
-  let mutable left : Node option = None
-  let mutable right : Node option = None
-  member _.Label = label
-  member _.Left
-    with get () = left.Value
-    and set l = left <- Some l
-  member _.Right
-    with get () = right.Value
-    and set r = right <- Some r
+let move (instruction : Instruction) (left : Node, right : Node) =
+  match instruction with
+  | Left -> left
+  | Right -> right
 
-type Network (descriptions : NodeDescription list) =
-  let nodes = Dictionary<string, Node> ()
-  do
-    for d in descriptions do
-      nodes.Add (d.Label, Node d.Label)
-    for d in descriptions do
-      let node = nodes[d.Label]
-      node.Left <- nodes[d.Left]
-      node.Right <- nodes[d.Right]
+let steps (start : Node) (instructions : Instruction list, network : Network) =
+  let rec loop steps instrs node =
+    match instrs with
+    | [] -> loop steps instructions node
+    | instr :: instrs ->
+      let next = move instr network[node]
+      if next[next.Length - 1] = 'Z' then steps
+      else loop (steps + 1) instrs next
+  loop 1 instructions start
 
-  member _.Next (label : string) (instruction : Instruction) =
-    let node = nodes[label]
-    match instruction with
-    | Left -> node.Left.Label
-    | Right -> node.Right.Label
-  
-
-type Document = { Path : Path; Network : Network }
-
-let pInstruction : Parsec<Instruction> =
+let pInstruction =
   fun input ->
-    if input.Length = 0 then None
-    else
-      match input[0] with
-      | 'L' -> Some (Left, input.Substring 1)
-      | 'R' -> Some (Right, input.Substring 1)
-      | _ -> None
-
-let pPath =
-  pAtLeastOne pInstruction
+    match pAnyChar input with
+    | Some ('L', inp) -> Some (Left, inp)
+    | Some ('R', inp) -> Some (Right, inp)
+    | _ -> None
 
 let pNodeDescription =
-  let pLabel = pLetters .>> pWord "="
+  let pLabel = pLetters .>> pChar '='
   let pLeft = pChar '(' >>. pLetters
   let pRight = pChar ',' >>. pLetters .>> pChar ')'
-  pLabel .>>. pLeft .>>. pRight
-  |> map (fun ((label, left), right) -> NodeDescription.ctor label left right)
+  pLabel .>>. (pLeft .>>. pRight)
 
 let pNetwork =
-  map Network (pAtLeastOne pNodeDescription)
-
-let pDocument =
-  pPath .>>. pNetwork
-  |> map (fun (path, network) -> { Path = path; Network = network })
+  map (Map.ofList) (pAtLeastOne pNodeDescription)
 
 
 module Puzzle1 =
 
   open System.IO
 
-  let steps (doc : Document) =
-    let rec loop (label : string) path (steps : int) =
-      match path with
-      | [] -> loop label doc.Path steps
-      | instruction :: continuation ->
-        match doc.Network.Next label instruction with
-        | "ZZZ" -> steps
-        | next -> loop next continuation (steps + 1)
-    loop "AAA" doc.Path 1
+  let solve (input : string) =
+    File.ReadAllText input
+    |> getParsed (pAtLeastOne pInstruction .>>. pNetwork)
+    |> steps "AAA"
+
+module Puzzle2 =
+
+  open System.IO
+  open System.Numerics
+  
+  let lcm (a : bigint) (b : bigint) =
+    (a * b) / BigInteger.GreatestCommonDivisor (a, b)
+    //|> int
+
+  let ghostSteps (instructions : Instruction list, network : Network) =
+    let startNodes = network.Keys |> Seq.filter (fun l -> l[l.Length - 1] = 'A')
+    Seq.reduce lcm
+      (Seq.map (fun start -> steps start (instructions, network) |> bigint) startNodes)
 
   let solve (input : string) =
     File.ReadAllText input
-    |> getParsed pDocument
-    |> steps
-  
-  
-
+    |> getParsed (pAtLeastOne pInstruction .>>. pNetwork)
+    |> ghostSteps

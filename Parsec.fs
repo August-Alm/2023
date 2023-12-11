@@ -56,12 +56,12 @@ let pAnyChar : Parsec<char> =
       if Char.IsWhiteSpace c then None
       else if n = 1 then Some (c, "") else Some (c, input.Substring 1)
 
-// Skips leading whitespace!
+// Skips leading whitespace! Should really be named `pLettersOrDigits`.
 let pLetters : Parsec<string> =
   fun input ->
     let input = input.TrimStart ()
     let mutable i = 0
-    while i < input.Length && Char.IsLetter input[i] do
+    while i < input.Length && Char.IsLetterOrDigit input[i] do
       i <- i + 1
     if i = 0 then None
     else Some (input.Substring (0, i), input.Substring i)

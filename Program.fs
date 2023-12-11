@@ -30,7 +30,8 @@ let main _ =
   printfn "Day 7, Puzzle 1: %A" (Day7.Puzzle1.solve (input 7))
   printfn "Day 7, Puzzle 2: %A" (Day7.Puzzle2.solve (input 7))
 
-  printfn "Day 8, Puzzle 1: %A" (Day8.Puzzle1.solve "Input/Day08/test.txt")
   printfn "Day 8, Puzzle 1: %A" (Day8.Puzzle1.solve (input 8))
+  printfn "Day 8, Puzzle 2: %A" (Day8.Puzzle2.solve (input 8))
+
 
   0
