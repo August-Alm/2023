@@ -33,7 +33,7 @@ module Puzzle2 =
 
   let rec complete history =
     if List.forall ((=) 0) history then 0
-    else List.head history  - complete (delta history)
+    else List.head history - complete (delta history)
 
   let solve (input : string) =
     File.ReadAllLines input

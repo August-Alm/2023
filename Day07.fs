@@ -21,23 +21,6 @@ type Card =
 [<RequireQualifiedAccess>]
 module Card =
 
-  let ofChar (c : char) =
-    match c with
-    | 'A' -> Card.A
-    | 'K' -> Card.K
-    | 'Q' -> Card.Q
-    | 'J' -> Card.J
-    | 'T' -> Card.T
-    | '9' -> Card.Nine
-    | '8' -> Card.Eight
-    | '7' -> Card.Seven
-    | '6' -> Card.Six
-    | '5' -> Card.Five
-    | '4' -> Card.Four
-    | '3' -> Card.Three
-    | '2' -> Card.Two
-    | _ -> failwith $"invalid card: {c}"
-
   let strength (card : Card) =
     match card with
     | Card.A -> 14
@@ -170,8 +153,27 @@ module Hand =
     | cmp -> cmp
 
 
+let pCard : Parsec<Card> =
+  fun input ->
+    if input.Length = 0 then None
+    else
+      match input[0] with
+      | 'A' -> Some (Card.A, input.Substring 1)
+      | 'K' -> Some (Card.K, input.Substring 1)
+      | 'Q' -> Some (Card.Q, input.Substring 1)
+      | 'J' -> Some (Card.J, input.Substring 1)
+      | 'T' -> Some (Card.T, input.Substring 1)
+      | '9' -> Some (Card.Nine, input.Substring 1)
+      | '8' -> Some (Card.Eight, input.Substring 1)
+      | '7' -> Some (Card.Seven, input.Substring 1)
+      | '6' -> Some (Card.Six, input.Substring 1)
+      | '5' -> Some (Card.Five, input.Substring 1)
+      | '4' -> Some (Card.Four, input.Substring 1)
+      | '3' -> Some (Card.Three, input.Substring 1)
+      | '2' -> Some (Card.Two, input.Substring 1)
+      | _ -> None
+
 let pHand =
-  let pCard = map Card.ofChar pAnyChar
   (pAtLeastOne pCard) .>>. pLong
   |> map (fun (cs, bid) -> { Cards = cs; Bid = bid })
 

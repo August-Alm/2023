@@ -11,8 +11,7 @@ let getParsed (p : Parsec<'a>) (inp : string) =
   | None -> failwith "parse error"
 
 let bind (p : Parsec<'a>) (f : 'a -> Parsec<'b>) : Parsec<'b> =
-  fun input ->
-    p input |> Option.bind (fun (a, inp) -> (f a) inp)
+  Option.bind (fun (a, inp) -> (f a) inp) << p
 
 let retur (a : 'a) : Parsec<'a> =
   fun input -> Some (a, input)
@@ -35,8 +34,7 @@ let (<|>) (p1 : Parsec<'a>) (p2 : Parsec<'a>) : Parsec<'a> =
     | None -> p2 input
 
 let map (f : 'a -> 'b) (p : Parsec<'a>) : Parsec<'b> =
-  fun input ->
-    p input |> Option.map (fun (a, inp) -> (f a, inp))
+  Option.map (fun (a, inp) -> (f a, inp)) << p
 
 // Skips leading whitespace!
 let pWord (w : string) : Parsec<string> =
@@ -45,16 +43,14 @@ let pWord (w : string) : Parsec<string> =
     if input.StartsWith w then Some (w, input.Substring w.Length)
     else None
 
-// Fails for leading whitespace!
+// Skips leading whitespace!
 let pAnyChar : Parsec<char> =
   fun input ->
-    let n = input.Length
-    if n = 0 then
-      None
-    else
-      let c = input[0]
-      if Char.IsWhiteSpace c then None
-      else if n = 1 then Some (c, "") else Some (c, input.Substring 1)
+    let input = input.TrimStart ()
+    match input.Length with
+    | 0 -> None
+    | 1 -> Some (input[0], "")
+    | _ -> Some (input[0], input.Substring 1)
 
 // Skips leading whitespace! Should really be named `pLettersOrDigits`.
 let pLetters : Parsec<string> =
@@ -69,31 +65,9 @@ let pLetters : Parsec<string> =
 // Skips leading whitespace!
 let pChar (c : char) : Parsec<char> =
   fun input ->
-    match pAnyChar (input.TrimStart ()) with
+    match pAnyChar input with
     | Some (c', input') when c = c' -> Some (c, input')
     | c' -> printfn $"{c'} <> {c}"; None
-
-// Skips leading whitespace!
-let pInt : Parsec<int> =
-  fun input ->
-    let input = input.TrimStart ()
-    let mutable n = 0
-    let mutable i = 0
-    let mutable sign = 0
-    if input.Length > 0 then
-      if input[0] = '-' then
-        sign <- -1
-        i <- 1
-      if input[0] = '+' then
-        sign <- 1
-        i <- 1
-    while i < input.Length && Char.IsDigit input[i] do
-      n <- n * 10 + (int input[i] - int '0')
-      i <- i + 1
-    match sign, i with
-    | 0, 0 | 1, 1 | -1, 1 -> None
-    | -1, _ -> Some (-n, input.Substring i)
-    | _, _ -> Some (n, input.Substring i)
 
 // Skips leading whitespace!
 let pLong : Parsec<int64> =
@@ -106,7 +80,7 @@ let pLong : Parsec<int64> =
       if input[0] = '-' then
         sign <- -1
         i <- 1
-      if input.[0] = '+' then
+      if input[0] = '+' then
         sign <- 1
         i <- 1
     while i < input.Length && Char.IsDigit input[i] do
@@ -116,6 +90,9 @@ let pLong : Parsec<int64> =
     | 0, 0 | 1, 1 | -1, 1 -> None
     | -1, _ -> Some (-n, input.Substring i)
     | _, _ -> Some (n, input.Substring i)
+
+// Skips leading whitespace!
+let pInt = map int pLong
 
 let pAtLeastOneSep sep p =
   let consWith pRem x = map (fun xs -> x :: xs) pRem <|> retur [ x ]
