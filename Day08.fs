@@ -57,18 +57,21 @@ module Puzzle2 =
   let lcm (a : bigint) (b : bigint) =
     (a * b) / BigInteger.GreatestCommonDivisor (a, b)
 
+  let inline isStart (node : Node) = node.[node.Length - 1] = 'A'
+  let inline isEnd (node : Node) = node.[node.Length - 1] = 'Z'
+
   let steps (instructions : Instruction list, network : Network) start =
     let rec loop steps instrs node =
       match instrs with
       | [] -> loop steps instructions node
       | instr :: instrs ->
         let next = move instr network[node]
-        if next[next.Length - 1] = 'Z' then steps
+        if next |> isEnd then steps
         else loop (steps + 1I) instrs next
     loop 1I instructions start
 
   let ghostSteps (instructions : Instruction list, network : Network) =
-    let startNodes = Seq.filter (fun (l : string) -> l[l.Length - 1] = 'A') network.Keys
+    let startNodes = Seq.filter isStart network.Keys
     Seq.reduce lcm (Seq.map  (steps (instructions, network)) startNodes)
 
   let solve (input : string) =
