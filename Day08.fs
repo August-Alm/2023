@@ -13,7 +13,7 @@ let move (instruction : Instruction) (left : Node, right : Node) =
   | Left -> left
   | Right -> right
 
-let steps (start : Node) (instructions : Instruction list, network : Network) =
+let steps (instructions : Instruction list, network : Network) (start : Node) =
   let rec loop steps instrs node =
     match instrs with
     | [] -> loop steps instructions node
@@ -47,7 +47,7 @@ module Puzzle1 =
   let solve (input : string) =
     File.ReadAllText input
     |> getParsed (pAtLeastOne pInstruction .>>. pNetwork)
-    |> steps "AAA"
+    |> (fun doc -> steps doc "AAA")
 
 module Puzzle2 =
 
@@ -56,12 +56,10 @@ module Puzzle2 =
   
   let lcm (a : bigint) (b : bigint) =
     (a * b) / BigInteger.GreatestCommonDivisor (a, b)
-    //|> int
 
   let ghostSteps (instructions : Instruction list, network : Network) =
     let startNodes = network.Keys |> Seq.filter (fun l -> l[l.Length - 1] = 'A')
-    Seq.reduce lcm
-      (Seq.map (fun start -> steps start (instructions, network) |> bigint) startNodes)
+    Seq.reduce lcm (Seq.map (steps (instructions, network) >> bigint) startNodes)
 
   let solve (input : string) =
     File.ReadAllText input
