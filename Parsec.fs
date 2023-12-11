@@ -79,11 +79,21 @@ let pInt : Parsec<int> =
     let input = input.TrimStart ()
     let mutable n = 0
     let mutable i = 0
+    let mutable sign = 0
+    if input.Length > 0 then
+      if input[0] = '-' then
+        sign <- -1
+        i <- 1
+      if input[0] = '+' then
+        sign <- 1
+        i <- 1
     while i < input.Length && Char.IsDigit input[i] do
       n <- n * 10 + (int input[i] - int '0')
       i <- i + 1
-    if i = 0 then None
-    else Some (n, input.Substring i)
+    match sign, i with
+    | 0, 0 | 1, 1 | -1, 1 -> None
+    | -1, _ -> Some (-n, input.Substring i)
+    | _, _ -> Some (n, input.Substring i)
 
 // Skips leading whitespace!
 let pLong : Parsec<int64> =
@@ -91,11 +101,21 @@ let pLong : Parsec<int64> =
     let input = input.TrimStart ()
     let mutable n = 0L
     let mutable i = 0
+    let mutable sign = 0
+    if input.Length > 0 then
+      if input[0] = '-' then
+        sign <- -1
+        i <- 1
+      if input.[0] = '+' then
+        sign <- 1
+        i <- 1
     while i < input.Length && Char.IsDigit input[i] do
       n <- n * 10L + (int64 input[i] - int64 '0')
       i <- i + 1
-    if i = 0 then None
-    else Some (n, input.Substring i)
+    match sign, i with
+    | 0, 0 | 1, 1 | -1, 1 -> None
+    | -1, _ -> Some (-n, input.Substring i)
+    | _, _ -> Some (n, input.Substring i)
 
 let pAtLeastOneSep sep p =
   let consWith pRem x = map (fun xs -> x :: xs) pRem <|> retur [ x ]
