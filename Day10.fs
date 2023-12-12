@@ -14,7 +14,6 @@ module Dir =
     | E -> W
     | W -> E
 
-
 type Tile =
   | NS
   | EW
@@ -53,9 +52,11 @@ module Grid =
       None
   
   let positions (grid : Grid) =
-    seq { 0 .. grid.Length - 1 }
-    |> Seq.collect (fun y ->
-      Seq.init grid[y].Length (fun x -> { X = x; Y = y}))
+    seq {
+      for y in 0 .. grid.Length - 1 do
+        for x in 0 .. grid[y].Length - 1 do
+          yield { X = x; Y = y }
+    }
 
   let findStart grid =
     positions grid
@@ -123,9 +124,6 @@ module Puzzle1 =
     
 module Puzzle2 =
 
-  let loopSet (grid : Grid) =
-    Set.ofList (Grid.loop grid)
-  
   let inside (grid : Grid) (loop : Set<Pos>) (pos : Pos) =
     let rec foo ans (pos : Pos) =
       match Grid.tileAt grid pos with
