@@ -7,8 +7,8 @@ type Dir = N | S | E | W
 [<RequireQualifiedAccess>]
 module Dir =
 
-  let flip =
-    function
+  let flip (dir : Dir) =
+    match dir with
     | N -> S
     | S -> N
     | E -> W
@@ -25,24 +25,6 @@ type Tile =
   | Ground
   | Start
 
-[<RequireQualifiedAccess>]
-module Tile =
-
-  let openings (tile : Tile) =
-    match tile with
-    | NS -> [| N; S |]
-    | EW -> [| E; W |]
-    | NE -> [| N; E |]
-    | NW -> [| N; W |]
-    | SW -> [| S; W |]
-    | SE -> [| S; E |]
-    | Ground -> [| |]
-    | Start -> [| N; S; E; W |]
-  
-  let hasOpening (dir : Dir) (tile : Tile) =
-    Array.contains dir (openings tile)
-
-
 type Grid = Tile array array
 
 [<Struct>]
@@ -51,13 +33,12 @@ type Pos = { X : int; Y : int }
 [<RequireQualifiedAccess>]
 module Pos =
 
-  let go (dir : Dir) (pos : Pos) =
+  let go (pos : Pos) (dir : Dir) =
     match dir with
     | N -> { pos with Y = pos.Y - 1 }
     | S -> { pos with Y = pos.Y + 1 }
     | E -> { pos with X = pos.X + 1 }
     | W -> { pos with X = pos.X - 1 }
-
 
 [<RequireQualifiedAccess>]
 module Grid =
@@ -71,41 +52,46 @@ module Grid =
     else
       None
   
-  let neighbors (grid : Grid) (pos : Pos) =
-    match tileAt grid pos with
-    | None -> [||]
-    | Some tile -> 
-      Tile.openings tile
-      |> Array.choose (fun dir ->
-        tileAt grid (Pos.go dir pos) |> Option.bind (fun t ->
-          if Tile.hasOpening (Dir.flip dir) t then Some (Pos.go dir pos)
-          else None))
+  let positions (grid : Grid) =
+    seq { 0 .. grid.Length - 1 }
+    |> Seq.collect (fun y ->
+      Seq.init grid[y].Length (fun x -> { X = x; Y = y}))
 
-// Add distances (emanating from the given position) to the map,
-// but only if they are shorter than the existing.
-let rec foo (grid : Grid) (d : int) (distances : Map<Pos, int>) (pos : Pos) =
-  match distances.TryFind pos with
-  | Some d' when d' <= d -> distances
-  | _ ->
-    Array.fold
-      (foo grid (d + 1))
-      (Map.add pos d distances)
-      (Grid.neighbors grid pos)
+  let findStart grid =
+    positions grid
+    |> Seq.find (fun pos -> tileAt grid pos = Some Start)
+  
+  let next (grid : Grid) (enter : Dir, pos : Pos) =
+    match enter, tileAt grid pos with
+    | N, Some NS -> Some (N, Pos.go pos S)
+    | S, Some NS -> Some (S, Pos.go pos N)
+    | E, Some EW -> Some (E, Pos.go pos W)
+    | W, Some EW -> Some (W, Pos.go pos E)
+    | N, Some NE -> Some (W, Pos.go pos E)
+    | E, Some NE -> Some (S, Pos.go pos N)
+    | S, Some SW -> Some (E, Pos.go pos W)
+    | W, Some SW -> Some (N, Pos.go pos S)
+    | N, Some NW -> Some (E, Pos.go pos W)
+    | W, Some NW -> Some (S, Pos.go pos N)
+    | S, Some SE -> Some (W, Pos.go pos E)
+    | E, Some SE -> Some (N, Pos.go pos S)
+    | _, _ -> None
 
-let getStart (grid : Grid) =
-  let mutable y = 0
-  let mutable x = 0
-  while grid[y].[x] <> Start do
-    x <- x + 1
-    if x = grid[y].Length then
-      x <- 0
-      y <- y + 1
-  { X = x; Y = y }
+  let path (grid : Grid) (stop : Pos) (enter, beginning) =
+    let rec loop poses =
+      next grid >> Option.bind (fun (dir, pos) ->
+        if pos = stop then Some (pos :: poses)
+        else loop (pos :: poses) (dir, pos))
+    loop [ beginning ] (enter, beginning)
+  
+  let loop grid =
+    let start = findStart grid
+    seq { N; S; E; W }
+    |> Seq.map (fun enter -> path grid start (Dir.flip enter, Pos.go start enter))
+    |> Seq.find Option.isSome
+    |> Option.get
 
-let distances (grid : Grid) =
-  foo grid 0 Map.empty (getStart grid)
-
-let parseGrid (input : string) =
+let parseGrid (input : string) : Grid =
   use stream = new FileStream (input, FileMode.Open)
   use reader = new StreamReader (stream)
   let rowBuffer = ResizeArray<Tile array> ()
@@ -131,7 +117,30 @@ module Puzzle1 =
 
   let solve (input : string) =
     let grid = parseGrid input
-    let distances = distances grid
-    distances.Values |> Seq.max
+    let path = Grid.loop grid
+    path.Length / 2
   
     
+module Puzzle2 =
+
+  let loopSet (grid : Grid) =
+    Set.ofList (Grid.loop grid)
+  
+  let inside (grid : Grid) (loop : Set<Pos>) (pos : Pos) =
+    let rec foo ans (pos : Pos) =
+      match Grid.tileAt grid pos with
+      | Some t ->
+        match t with
+        | NS | NW | NE | Start when loop.Contains pos ->
+          foo (not ans) (Pos.go pos W)
+        | _ -> foo ans (Pos.go pos W)
+      | None -> ans
+    if loop.Contains pos then false
+    else foo false (Pos.go pos W)
+
+  let solve (input : string) =
+    let grid = parseGrid input
+    let loop = Set.ofList (Grid.loop grid)
+    Grid.positions grid
+    |> Seq.filter (inside grid loop)
+    |> Seq.length
