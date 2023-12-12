@@ -62,7 +62,7 @@ module Grid =
     positions grid
     |> Seq.find (fun pos -> tileAt grid pos = Some Start)
   
-  let next (grid : Grid) (enter : Dir, pos : Pos) =
+  let private next (grid : Grid) (enter : Dir, pos : Pos) =
     match enter, tileAt grid pos with
     | N, Some NS -> Some (N, Pos.go pos S)
     | S, Some NS -> Some (S, Pos.go pos N)
@@ -92,38 +92,39 @@ module Grid =
     |> Seq.find Option.isSome
     |> Option.get
 
-let parseGrid (input : string) : Grid =
-  use stream = new FileStream (input, FileMode.Open)
-  use reader = new StreamReader (stream)
-  let rowBuffer = ResizeArray<Tile array> ()
-  let lineBuffer = ResizeArray<Tile> ()
-  while not reader.EndOfStream do
-    for c in reader.ReadLine () do
-      match c with
-      | '|' -> lineBuffer.Add NS
-      | '-' -> lineBuffer.Add EW
-      | 'L' -> lineBuffer.Add NE
-      | 'J' -> lineBuffer.Add NW
-      | '7' -> lineBuffer.Add SW
-      | 'F' -> lineBuffer.Add SE
-      | '.' -> lineBuffer.Add Ground
-      | 'S' -> lineBuffer.Add Start
-      | _ -> failwith $"invalid tile character {c}"
-    rowBuffer.Add (lineBuffer.ToArray ())
-    lineBuffer.Clear ()
-  rowBuffer.ToArray ()
+  let parse (input : string) : Grid =
+    use stream = new FileStream (input, FileMode.Open)
+    use reader = new StreamReader (stream)
+    let rowBuffer = ResizeArray<Tile array> ()
+    let lineBuffer = ResizeArray<Tile> ()
+    while not reader.EndOfStream do
+      for c in reader.ReadLine () do
+        match c with
+        | '|' -> lineBuffer.Add NS
+        | '-' -> lineBuffer.Add EW
+        | 'L' -> lineBuffer.Add NE
+        | 'J' -> lineBuffer.Add NW
+        | '7' -> lineBuffer.Add SW
+        | 'F' -> lineBuffer.Add SE
+        | '.' -> lineBuffer.Add Ground
+        | 'S' -> lineBuffer.Add Start
+        | _ -> failwith $"invalid tile character {c}"
+      rowBuffer.Add (lineBuffer.ToArray ())
+      lineBuffer.Clear ()
+    rowBuffer.ToArray ()
 
 
 module Puzzle1 =
 
   let solve (input : string) =
-    let grid = parseGrid input
+    let grid = Grid.parse input
     let path = Grid.loop grid
     path.Length / 2
   
     
 module Puzzle2 =
 
+  // Ray casting algorithm!
   let inside (grid : Grid) (loop : Set<Pos>) (pos : Pos) =
     let rec foo ans (pos : Pos) =
       match Grid.tileAt grid pos with
@@ -137,7 +138,7 @@ module Puzzle2 =
     else foo false (Pos.go pos W)
 
   let solve (input : string) =
-    let grid = parseGrid input
+    let grid = Grid.parse input
     let loop = Set.ofList (Grid.loop grid)
     Grid.positions grid
     |> Seq.filter (inside grid loop)
