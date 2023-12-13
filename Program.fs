@@ -8,6 +8,7 @@ open System.IO
 let main _ =
 
   let input i = Path.Combine ("Input", sprintf "Day%02i" i, $"puzzle.txt")
+  let test i = Path.Combine ("Input", sprintf "Day%02i" i, $"test.txt")
 
   printfn "Day 1, Puzzle 1: %A" (Day1.Puzzle1.solve (input 1))
   printfn "Day 1, Puzzle 2: %A" (Day1.Puzzle2.solve (input 1))
@@ -38,5 +39,8 @@ let main _ =
 
   printfn "Day 10, Puzzle 1: %A" (Day10.Puzzle1.solve (input 10))
   printfn "Day 10, Puzzle 2: %A" (Day10.Puzzle2.solve (input 10))
+
+  printfn "Day 11, Puzzle 1: %A" (Day11.Puzzle1.solve (input 11))
+  printfn "Day 11, Puzzle 2: %A" (Day11.Puzzle2.solve (input 11))
 
   0
