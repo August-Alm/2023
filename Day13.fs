@@ -23,13 +23,16 @@ module Direction =
   let E1 = Complex.One
   let E2 = Complex.ImaginaryOne
 
-  let ortho dir =
-    if dir = E1 then E2 else E1
+  let ortho dir = if dir = E1 then E2 else E1
 
 type Pattern = Ash | Mirror
 
-type PatternMap (block : string) =
-  let dictionary =
+type PatternMap = FrozenDictionary<Complex, Pattern>
+
+[<RequireQualifiedAccess>]
+module PatternMap =
+  
+  let ctor (block : string) =
     let lines = String.lines block
     FrozenDictionary.ToFrozenDictionary (seq {
       for y in 0 .. lines.Length - 1 do
@@ -39,24 +42,18 @@ type PatternMap (block : string) =
           | '#' -> yield KeyValuePair (Complex (x, y), Mirror)
           | c -> failwithf "not a pattern character: %c" c })
   
-  member _.Contains (pos : Complex) =
-    dictionary.ContainsKey pos
-  
-  member _.PatternAt (pos : Complex) =
-    match dictionary.TryGetValue pos with
+  let patternAt (map : PatternMap) (pos : Complex) =
+    match map.TryGetValue pos with
     | true, v -> Some v
     | _ -> None
 
-[<RequireQualifiedAccess>]
-module PatternMap =
-
   let getRay (map : PatternMap) (start : Complex) (dir : Complex) =
     start |> List.unfold (fun pos ->
-      if map.Contains pos then Some (pos, pos + dir) else None)
+      if map.ContainsKey pos then Some (pos, pos + dir) else None)
   
   let findSmudges (map : PatternMap) (mirror : Complex) (dir : Complex) =
     let inline distinctAtCount (pos1, pos2) =
-      if map.PatternAt pos1 <> map.PatternAt pos2 then 1 else 0
+      if patternAt map pos1 <> patternAt map pos2 then 1 else 0
     List.sum ([
       for ray0 in getRay map mirror (Direction.ortho dir) do
         Seq.zip (getRay map ray0 dir) (getRay map (ray0 - dir) (-dir))
@@ -74,13 +71,11 @@ module Puzzle1 =
   let solve (input : string) =
     File.ReadAllText input
     |> String.blocks
-    |> Seq.map (PatternMap >> PatternMap.getScore 0)
-    |> Seq.sum
+    |> Seq.sumBy (PatternMap.ctor >> PatternMap.getScore 0)
 
 module Puzzle2 =
 
   let solve (input : string) =
     File.ReadAllText input
     |> String.blocks
-    |> Seq.map (PatternMap >> PatternMap.getScore 1)
-    |> Seq.sum
+    |> Seq.sumBy (PatternMap.ctor >> PatternMap.getScore 1)
