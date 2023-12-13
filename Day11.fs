@@ -8,8 +8,8 @@ type Galaxy = int * int
 module Galaxy =
 
   let expand (by : int) (galaxies : Galaxy list) =
-    let xs = Set.ofList (List.map snd galaxies)
-    let ys = Set.ofList (List.map fst galaxies)
+    let xs = Set.ofSeq (Seq.map snd galaxies)
+    let ys = Set.ofSeq (Seq.map fst galaxies)
     let missingXs =
       Seq.init (Seq.max xs + 1) id
       |> Seq.filter (fun x -> not (Set.contains x xs))
