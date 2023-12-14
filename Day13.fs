@@ -1,6 +1,5 @@
 module AdventOfCode.Day13
 
-open System.Numerics
 open System.Collections.Frozen
 open System.Collections.Generic
 open System.IO
@@ -17,17 +16,40 @@ module String =
     s.Split ([| "\r\n"; "\n" |], StringSplitOptions.RemoveEmptyEntries)
 
 
+[<Struct>]
+type GaussianInt = { X : int; Y : int }
+with
+  static member Zero = { X = 0; Y = 0 }
+  static member One = { X = 1; Y = 0 }
+  static member ImaginaryOne = { X = 0; Y = 1 }
+
+  static member (+) (a, b) =
+    { X = a.X + b.X; Y = a.Y + b.Y }
+  
+  static member (-) (a, b) =
+    { X = a.X - b.X; Y = a.Y - b.Y }
+  
+  static member (~-) a =
+    { X = -a.X; Y = -a.Y }
+  
+  static member (*) (a, b) =
+    { X = a.X * b.X - a.Y * b.Y; Y = a.X * b.Y + a.Y * b.X }
+  
+  static member (/) (a, b) =
+    failwith "gaussian integers only form a ring"
+
+
 [<RequireQualifiedAccess>]
 module Direction =
 
-  let E1 = Complex.One
-  let E2 = Complex.ImaginaryOne
+  let E1 = GaussianInt.One
+  let E2 = GaussianInt.ImaginaryOne
 
   let ortho dir = if dir = E1 then E2 else E1
 
 type Pattern = Ash | Mirror
 
-type PatternMap = FrozenDictionary<Complex, Pattern>
+type PatternMap = FrozenDictionary<GaussianInt, Pattern>
 
 [<RequireQualifiedAccess>]
 module PatternMap =
@@ -38,20 +60,20 @@ module PatternMap =
       for y in 0 .. lines.Length - 1 do
         for x in 0 .. lines[y].Length - 1 do
           match lines[y][x] with
-          | '.' -> yield KeyValuePair (Complex (x, y), Ash)
-          | '#' -> yield KeyValuePair (Complex (x, y), Mirror)
+          | '.' -> yield KeyValuePair ({ X = x; Y = y }, Ash)
+          | '#' -> yield KeyValuePair ({ X = x; Y = y }, Mirror)
           | c -> failwithf "not a pattern character: %c" c })
   
-  let patternAt (map : PatternMap) (pos : Complex) =
+  let patternAt (map : PatternMap) (pos : GaussianInt) =
     match map.TryGetValue pos with
     | true, v -> Some v
     | _ -> None
 
-  let getRay (map : PatternMap) (start : Complex) (dir : Complex) =
+  let getRay (map : PatternMap) (start : GaussianInt) (dir : GaussianInt) =
     start |> List.unfold (fun pos ->
       if map.ContainsKey pos then Some (pos, pos + dir) else None)
   
-  let findSmudges (map : PatternMap) (mirror : Complex) (dir : Complex) =
+  let findSmudges (map : PatternMap) (mirror : GaussianInt) (dir : GaussianInt) =
     let inline distinctAtCount (pos1, pos2) =
       if patternAt map pos1 <> patternAt map pos2 then 1 else 0
     List.sum ([
@@ -64,7 +86,7 @@ module PatternMap =
       for dir in [ Direction.E1; Direction.E2 ] do
         for mirror in getRay map dir dir do
           if findSmudges map mirror dir = allowedSmudges then
-            yield int (mirror.Real + 100.0 * mirror.Imaginary) })  
+            yield mirror.X + 100 * mirror.Y })  
 
 module Puzzle1 =
 
