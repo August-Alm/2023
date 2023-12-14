@@ -1,7 +1,5 @@
 module AdventOfCode.Day13
 
-open System.Collections.Frozen
-open System.Collections.Generic
 open System.IO
 open System
 
@@ -23,14 +21,11 @@ with
   static member One = { X = 1; Y = 0 }
   static member ImaginaryOne = { X = 0; Y = 1 }
 
-  static member (+) (a, b) =
-    { X = a.X + b.X; Y = a.Y + b.Y }
+  static member (+) (a, b) = { X = a.X + b.X; Y = a.Y + b.Y }
   
-  static member (-) (a, b) =
-    { X = a.X - b.X; Y = a.Y - b.Y }
+  static member (-) (a, b) = { X = a.X - b.X; Y = a.Y - b.Y }
   
-  static member (~-) a =
-    { X = -a.X; Y = -a.Y }
+  static member (~-) a = { X = -a.X; Y = -a.Y }
   
   static member (*) (a, b) =
     { X = a.X * b.X - a.Y * b.Y; Y = a.X * b.Y + a.Y * b.X }
@@ -47,27 +42,26 @@ module Direction =
 
   let ortho dir = if dir = E1 then E2 else E1
 
+[<Struct>]
 type Pattern = Ash | Mirror
 
-type PatternMap = FrozenDictionary<GaussianInt, Pattern>
+type PatternMap = Map<GaussianInt, Pattern>
 
 [<RequireQualifiedAccess>]
 module PatternMap =
   
   let ctor (block : string) =
     let lines = String.lines block
-    FrozenDictionary.ToFrozenDictionary (seq {
+    Map.ofSeq (seq {
       for y in 0 .. lines.Length - 1 do
         for x in 0 .. lines[y].Length - 1 do
           match lines[y][x] with
-          | '.' -> yield KeyValuePair ({ X = x; Y = y }, Ash)
-          | '#' -> yield KeyValuePair ({ X = x; Y = y }, Mirror)
+          | '.' -> yield ({ X = x; Y = y }, Ash)
+          | '#' -> yield ({ X = x; Y = y }, Mirror)
           | c -> failwithf "not a pattern character: %c" c })
   
   let patternAt (map : PatternMap) (pos : GaussianInt) =
-    match map.TryGetValue pos with
-    | true, v -> Some v
-    | _ -> None
+    Map.tryFind pos map
 
   let getRay (map : PatternMap) (start : GaussianInt) (dir : GaussianInt) =
     start |> List.unfold (fun pos ->

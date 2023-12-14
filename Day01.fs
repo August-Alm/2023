@@ -34,9 +34,7 @@ module Puzzle2 =
   module Digit =
 
     let digits =
-      [|
-        One; Two; Three; Four; Five; Six; Seven; Eight; Nine
-      |]
+      [| One; Two; Three; Four; Five; Six; Seven; Eight; Nine |]
     
     let toInt (d : Digit) =
       match d with
