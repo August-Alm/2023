@@ -8,25 +8,18 @@ type Galaxy = int * int
 module Galaxy =
 
   let expand (by : int) (galaxies : Galaxy list) =
-    let xs = Set.ofSeq (Seq.map snd galaxies)
-    let ys = Set.ofSeq (Seq.map fst galaxies)
-    let missingXs =
-      Seq.init (Seq.max xs + 1) id
-      |> Seq.filter (fun x -> not (Set.contains x xs))
-      |> Seq.cache
-    let missingYs =
-      Seq.init (Seq.max ys + 1) id
-      |> Seq.filter (fun y -> not (Set.contains y ys))
-      |> Seq.cache
+    let xs = List.distinct (List.map snd galaxies)
+    let ys = List.distinct (List.map fst galaxies)
+    let missingXs = List.except xs [ 0 .. List.max xs ]
+    let missingYs = List.except ys [ 0 .. List.max ys ]
     let adjustX x =
-      Seq.tryFindIndex ((<) x) missingXs
-      |> Option.defaultValue (Seq.length missingXs)
+      List.tryFindIndex ((<) x) missingXs
+      |> Option.defaultValue (List.length missingXs)
     let adjustY y =
-      Seq.tryFindIndex ((<) y) missingYs
-      |> Option.defaultValue (Seq.length missingYs)
-    let f (y, x) =
-      (y + by * adjustY y, x + by * adjustX x)
-    List.map f galaxies
+      List.tryFindIndex ((<) y) missingYs
+      |> Option.defaultValue (List.length missingYs)
+    galaxies
+    |> List.map (fun (y, x) -> (y + by * adjustY y, x + by * adjustX x))
   
   let pairs (galaxies : Galaxy list) =
     let f i = List.map (fun g -> (galaxies[i], g)) (List.skip (i + 1) galaxies)
