@@ -28,21 +28,19 @@ type Step = { Label : string; FocalLength : int option }
 module Step =
   
   let parse (item : string) =
-    let parts = item.Split ('-', '=')
-    { Label = parts[0]
-      FocalLength = 
-        match parts[1] with
-        | "" -> None
-        | s -> Some (System.Int32.Parse s)
-    }
+    if item[item.Length - 1] = '-' then
+      { Label = item.Substring (0, item.Length - 1); FocalLength = None }
+    else
+      let parts = item.Split "="
+      { Label = parts[0]; FocalLength = Some (int parts[1]) }
 
 type Boxes = ResizeArray<Lens> array
 
 [<RequireQualifiedAccess>]
 module Boxes =
 
-  let ctor (count : int) =
-    Array.init count (fun _ -> ResizeArray<Lens> ())
+  let empty () =
+    Array.init 256 (fun _ -> ResizeArray<Lens> ())
 
   let power (boxes : Boxes) =
     (Seq.indexed boxes) |> Seq.sumBy (fun (ib, box) ->
@@ -67,5 +65,5 @@ module Puzzle2 =
   let solve (input : string) =
     ((File.ReadAllLines input)[0]).Split ','
     |> Array.map Step.parse
-    |> Array.fold Boxes.update (Boxes.ctor 256)
+    |> Array.fold Boxes.update (Boxes.empty ())
     |> Boxes.power
