@@ -18,10 +18,8 @@ module Puzzle1 =
     |> Array.sumBy Hash.calculate
 
 
-[<Struct>]
 type Lens = { Label : string; FocalLength : int }
 
-[<Struct>]
 type Step = { Label : string; FocalLength : int option }
 
 [<RequireQualifiedAccess>]
