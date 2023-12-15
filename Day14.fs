@@ -85,7 +85,7 @@ module Puzzle1 =
 
 module Puzzle2 =
   
-    let solve (input : string) =
-      Platform.parse input
-      |> Platform.cycle
-      |> Platform.load
+  let solve (input : string) =
+    Platform.parse input
+    |> Platform.cycle
+    |> Platform.load
