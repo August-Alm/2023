@@ -20,3 +20,8 @@ with
     failwith "gaussian integers only form a ring"
   
   static member L1Norm a = abs a.X + abs a.Y
+
+  static member L2Norm a =
+    System.Math.Sqrt ((double a.X) * (double a.X) + (double a.Y) * (double a.Y))
+
+  static member ofInt n = { X = n; Y = 0 }
