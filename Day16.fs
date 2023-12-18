@@ -1,27 +1,17 @@
 module AdventOfCode.Day16
 
+open AdventOfCode.GaussianInt
 
-[<Struct>]
-type V2 = { X : int; Y : int }
-with
-  static member Zero = { X = 0; Y = 0 }
-  static member E1 = { X = 1; Y = 0 }
-  static member E2 = { X = 0; Y = 1 }
-
-  static member (+) (a, b) = { X = a.X + b.X; Y = a.Y + b.Y }
-  
-  static member (-) (a, b) = { X = a.X - b.X; Y = a.Y - b.Y }
-  
-  static member (~-) a = { X = -a.X; Y = -a.Y }
+type V2 = GaussianInt
 
 type Dir = Left | Right | Up | Down
 with
   static member toV2 =
     function
-    | Left -> -V2.E1
-    | Right -> V2.E1
-    | Up -> -V2.E2
-    | Down -> V2.E2
+    | Left -> -V2.One
+    | Right -> V2.One
+    | Up -> -V2.ImaginaryOne
+    | Down -> V2.ImaginaryOne
 
   static member (+) (a : V2, b : Dir) =
     a + Dir.toV2 b
