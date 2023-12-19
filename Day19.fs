@@ -231,7 +231,7 @@ module Puzzle2 =
     |> fst
   
   let acceptedVolume (workflows : Workflows) cube =
-    foo (Pending "in") workflows cube
+    bar workflows (Workflow.inWorkflow workflows) cube
 
   let theCube =
     { RangeX = { Min = 1; Max = 4000 }
