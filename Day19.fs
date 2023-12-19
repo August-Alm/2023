@@ -12,14 +12,14 @@ module String =
     s.Split ([| "\r\n"; "\n" |], StringSplitOptions.RemoveEmptyEntries)
 
 
-[<RequireQualifiedAccess>]
+[<Struct; RequireQualifiedAccess>]
 type Category =
   | X
   | M
   | A
   | S
 
-[<RequireQualifiedAccess>]
+[<Struct; RequireQualifiedAccess>]
 type Rating =
   { X : int
     M : int
@@ -46,7 +46,7 @@ module Rating =
     | Category.A -> rating.A
     | Category.S -> rating.S
 
-
+[<Struct>]
 type Verdict =
   | Approved
   | Rejected
@@ -173,7 +173,8 @@ module Puzzle2 =
       { range with Max = min (m - 1) range.Max },
       { range with Min = max m range.Min }
 
-  type Cube = { RangeX : Range; RangeM : Range; RangeA : Range; RangeS : Range }
+  type Cube =
+    { RangeX : Range; RangeM : Range; RangeA : Range; RangeS : Range }
 
   [<RequireQualifiedAccess>]
   module Cube =
