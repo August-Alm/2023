@@ -91,6 +91,7 @@ module DigPlan =
       p1.Real * p2.Imaginary - p1.Imaginary * p2.Real
     Array.init vertices.Length shoelace
   
+  // Pick's theorem
   let area (steps : Complex array) =
     let a = (abs (Array.sum (shoelaces (vertices steps)))) / 2.0
     let boundary =  steps |> Array.sumBy _.Magnitude
