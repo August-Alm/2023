@@ -32,6 +32,7 @@ module Grid =
   
   let valid (grid : Grid) (pos : Pos) =
     let n = grid.Size
+    // Avoiding negative remainders!
     grid.Positions.Contains { X = (pos.X % n + n) % n; Y = (pos.Y % n + n) % n }
   
   let neighbours (grid : Grid) (pos : Pos) =
@@ -64,10 +65,13 @@ module Puzzle2 =
 
   open System.IO
 
+  // Can't prove why but the result should be quadratic in `n` where
+  // `steps = rem + n * grid.Size`. A quadratic polynomial is determined
+  // by three points!
   let solution (steps : int) (start : Pos, grid : Grid) =
     let n = (bigint steps) / grid.Size
     let rem = (bigint steps) % grid.Size |> int
-    let walks = Seq.cache (Grid.walks (start, grid))
+    let walks = Grid.walks (start, grid) |> Seq.cache
     let s0 = Set.count (Seq.item (rem + 0 * int grid.Size) walks)
     let s1 = Set.count (Seq.item (rem + 1 * int grid.Size) walks)
     let s2 = Set.count (Seq.item (rem + 2 * int grid.Size) walks)
