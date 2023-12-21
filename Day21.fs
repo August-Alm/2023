@@ -46,7 +46,7 @@ module Grid =
     (Set.unionMany << Set.map (neighbours grid)) positions
   
   let walks (start, grid) =
-    Seq.iterate (visit grid) (Set.singleton start) |> Seq.cache  
+    Seq.iterate (visit grid) (Set.singleton start)
 
 
 module Puzzle1 =
@@ -66,23 +66,18 @@ module Puzzle2 =
 
   let solution (steps : int) (start : Pos, grid : Grid) =
     let n = (bigint steps) / grid.Size
-    let rem = (bigint steps) % grid.Size
-    let walks = Grid.walks (start, grid)
-    let coeffs =
-      [ rem; grid.Size + rem; grid.Size * 2I + rem ]
-      |> List.map (fun i -> Seq.item (int i) walks)
-      |> List.map (Set.count >> bigint)
-    match coeffs with
-    [ s0; s1; s2 ] ->
-      let c = s0
-      let a_plus_b = s1 - s0
-      let four_a_plus_two_b = s2 - s0
-      let two_a = four_a_plus_two_b - 2I * a_plus_b
-      let a = two_a / 2I
-      let b = a_plus_b - a
-      a * (n * n) + b * n + c
-    | _ -> failwith "impossible!"
-    
+    let rem = (bigint steps) % grid.Size |> int
+    let walks = Seq.cache (Grid.walks (start, grid))
+    let s0 = Set.count (Seq.item (rem + 0 * int grid.Size) walks)
+    let s1 = Set.count (Seq.item (rem + 1 * int grid.Size) walks)
+    let s2 = Set.count (Seq.item (rem + 2 * int grid.Size) walks)
+    let c = bigint s0
+    let a_plus_b = bigint s1 - c
+    let four_a_plus_two_b = bigint s2 - c
+    let two_a = four_a_plus_two_b - 2I * a_plus_b
+    let a = two_a / 2I
+    let b = a_plus_b - a
+    a * (n * n) + b * n + c
 
   let solve (input : string) =
     File.ReadAllLines input
