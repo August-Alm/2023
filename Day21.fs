@@ -16,12 +16,11 @@ type Grid = { Positions : Set<Pos>; Size : bigint }
 module Grid =
 
   let private coords (lines : string seq) (c : char) =
-    Seq.collect
-      (fun (y : int, line) ->
-        Seq.map
-          (fun (x : int, _) -> { X = bigint x; Y = bigint y })
-          (Seq.filter (fun (_, c') -> c = c') (Seq.indexed line)))
-      (Seq.indexed lines)
+    Seq.indexed lines
+    |> Seq.collect (fun (y, line) ->
+      Seq.indexed line
+      |> Seq.choose (fun (x, c') ->
+        if c' = c then Some { X = bigint x; Y = bigint y } else None))
   
   let parse (lines : string seq) =
     let positions = coords lines '.'
