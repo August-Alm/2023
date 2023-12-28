@@ -73,7 +73,7 @@ module Puzzle1 =
 
   let solve (input : string) =
     let graph = Graph.parse (File.ReadAllLines input)
-    let r = new Random 25
+    let r = Random 25
     let rec loop () =
       let cut = Graph.findCut graph r
       if cut.Size <> 3 then loop ()
