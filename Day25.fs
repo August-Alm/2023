@@ -64,7 +64,7 @@ module Graph =
       let c1 = componentSize'[a]
       let c2 = componentSize'[b]
       { Size = size; C1 = c1; C2 = c2 }    
-    | _ -> failwith "failed to find cut"
+    | _ -> failwith "impossible"
 
 
 module Puzzle1 =
