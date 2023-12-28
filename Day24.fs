@@ -1,6 +1,5 @@
 module AdventOfCode.Day24
 
-open System.Collections.Generic
 open System.Numerics
 open System
 
@@ -57,19 +56,21 @@ module BigInteger =
     let prod = Seq.fold (*) 1I moduli
     let sum =
       (moduli, numbers)
-      ||> Seq.map2 (fun m a -> let p = prod / m in a * modInv p m * p)
+      ||> Seq.map2 (fun m a -> let p = prod / m in a * (modInv p m) * p)
       |> Seq.sum
     sum % prod
 
-  let isOddPrime (n : bigint) =
+  let isPrime (n : bigint) =
     if n < 2I then false
+    elif n = 2I then true
     elif n % 2I = 0I then false
     else
-      let rec loop i =
-        if i * i > n then true
-        elif n % i = 0I then false
-        else loop (i + 2I)
-      loop 3I
+      let mutable i = 3I
+      let mutable answer = true
+      while answer && i * i <= n do
+        if n % i = 0I then answer <- false
+        else i <- i + 2I
+      answer
 
 
 [<Struct>]
@@ -113,7 +114,7 @@ module Particle3 =
     let ps = Array.map BigInteger.Parse (parts[0].Split ", ")
     let vs = Array.map BigInteger.Parse (parts[1].Split ", ")
     { Pos = { X = ps[0]; Y = ps[1]; Z = ps[2] }
-      Vel = { X = vs[0]; Y = vs[1]; Z = ps[2]}
+      Vel = { X = vs[0]; Y = vs[1]; Z = vs[2]}
     }
 
 module Puzzle1 =
@@ -144,31 +145,33 @@ module Puzzle2 =
 
   open System.IO
 
-  let rec loop v0 (dim : V3 -> bigint) (particles : Particle3 array) =
-    if v0 > 10000I then failwith "no solution found"
+  let sol dim particles =
     let moduli = ResizeArray<bigint> ()
     let numbers = ResizeArray<bigint> ()
-    for p in particles do
-      let m = v0 - dim p.Vel
-      if BigInteger.isOddPrime m && Seq.forall ((<>) m) moduli then
-        moduli.Add m
-        numbers.Add (dim p.Pos)
-    if moduli.Count > 0 then
-      let ch = BigInteger.chinese moduli numbers
-      let mutable ok = true
+    let getChinese v0 (dim : V3 -> bigint) =
       for p in particles do
-        let dv = v0 - dim p.Vel
-        let dx = abs (dim p.Pos - ch)
-        if dv = 0I then
-          if dx <> 0I then ok <- false
-        else
-          if dx % dv <> 0I then ok <- false
-      if ok then
-        ch
-      else loop (v0 + 1I) dim particles
-    else loop (v0 + 1I) dim particles
-  
-  let sol dim particles = loop -10000I dim particles
+        let m = v0 - dim p.Vel
+        if BigInteger.isPrime m && Seq.forall ((<>) m) moduli then
+          moduli.Add m
+          numbers.Add (dim p.Pos)
+      let ch = BigInteger.chinese moduli numbers
+      moduli.Clear (); numbers.Clear ()
+      ch
+    let verify v0 (dim : V3 -> bigint) ch =
+      not (Seq.exists
+        (fun p ->
+          let dv = v0 - dim p.Vel
+          let dx = abs (dim p.Pos - ch)
+          if dv = 0I then dx <> 0I else dx % dv <> 0I)
+        particles)
+    let rec loop v0 =
+      if v0 > 10000I then
+        failwith "no solution found"
+      else
+        let ans = getChinese v0 dim
+        if verify v0 dim ans then ans
+        else loop (v0 + 1I)
+    loop -10000I
 
   let solve (input : string) =
     let particles = Array.map Particle3.parse (File.ReadAllLines input)
